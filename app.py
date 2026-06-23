@@ -13,33 +13,33 @@ st.title("Clinic System MVP")
 create_tables()
 
 # -------------------------
-# Add Patient Section
+# SIDEBAR → Add Patient
 # -------------------------
 
-st.header("Add New Patient")
+st.sidebar.header("Add New Patient")
 
-name = st.text_input("Patient Name")
-phone = st.text_input("Phone Number")
-gender = st.selectbox("Gender", ["Male", "Female"])
+name = st.sidebar.text_input("Patient Name")
+phone = st.sidebar.text_input("Phone Number")
+gender = st.sidebar.selectbox("Gender", ["Male", "Female"])
 
-if st.button("Add Patient"):
+if st.sidebar.button("Add Patient"):
     if name:
         add_patient(name, phone, gender)
         log_event("ADD_PATIENT", name)
-        st.success("Patient added successfully ✅")
+        st.sidebar.success("Added ✅")
     else:
         log_event("ERROR_ADD_PATIENT", "Missing name")
-        st.error("Name is required ❌")
+        st.sidebar.error("Name required ❌")
 
 # -------------------------
-# Search + Display Patients Section (UPDATED)
+# MAIN → Patient Search + Table
 # -------------------------
 
 st.header("Patients")
 
 patients = get_all_patients()
 
-search = st.text_input("Search patient by name or phone")
+search = st.text_input("🔍 Search by name or phone")
 
 if patients:
     df = pd.DataFrame(
@@ -47,7 +47,6 @@ if patients:
         columns=["ID", "Name", "Phone", "Gender", "Created At"]
     )
 
-    # ✅ Apply search filter
     if search:
         df = df[
             df["Name"].str.contains(search, case=False, na=False) |
@@ -57,23 +56,29 @@ if patients:
 
     st.dataframe(df)
 else:
-    st.write("No patients found")
+    st.write("No patients yet")
 
 # -------------------------
-# Add Visit Section
+# MAIN → Add Visit
 # -------------------------
 
 st.header("Add Visit")
 
 if patients:
-    # use filtered df for dropdown
-    patient_dict = {f"{row['Name']} (ID {row['ID']})": row["ID"]
-                    for _, row in df.iterrows()} if search else \
-                   {f"{p[1]} (ID {p[0]})": p[0] for p in patients}
+    if search:
+        patient_dict = {
+            f"{row['Name']} (ID {row['ID']})": row["ID"]
+            for _, row in df.iterrows()
+        }
+    else:
+        patient_dict = {
+            f"{p[1]} (ID {p[0]})": p[0]
+            for p in patients
+        }
 
     if patient_dict:
         selected_patient = st.selectbox(
-            "Select Patient for Visit",
+            "Select Patient",
             list(patient_dict.keys())
         )
 
@@ -87,26 +92,29 @@ if patients:
             if complaint and diagnosis:
                 add_visit(patient_id, complaint, diagnosis, notes)
                 log_event("ADD_VISIT", selected_patient)
-                st.success("Visit added successfully ✅")
+                st.success("Visit added ✅")
             else:
                 log_event("ERROR_ADD_VISIT", selected_patient)
-                st.error("Complaint and Diagnosis are required ❌")
+                st.error("Fill required fields ❌")
     else:
-        st.write("No matching patient found for visit")
+        st.write("No matching patient")
 else:
-    st.write("Add a patient first before adding visits.")
+    st.write("Add a patient first")
 
 # -------------------------
-# View Visit History Section
+# MAIN → Patient History
 # -------------------------
 
-st.header("Patient Visit History")
+st.header("Visit History")
 
 if patients:
-    patient_dict_history = {f"{p[1]} (ID {p[0]})": p[0] for p in patients}
+    patient_dict_history = {
+        f"{p[1]} (ID {p[0]})": p[0]
+        for p in patients
+    }
 
     selected_patient_history = st.selectbox(
-        "Select Patient to View History",
+        "Select Patient",
         list(patient_dict_history.keys())
     )
 
@@ -123,4 +131,4 @@ if patients:
         )
         st.dataframe(visits_df)
     else:
-        st.write("No visits found for this patient")
+        st.write("No visits found")
