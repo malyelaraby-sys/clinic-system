@@ -32,7 +32,7 @@ if st.sidebar.button("Add Patient"):
         st.sidebar.error("Name required ❌")
 
 # -------------------------
-# MAIN → Patient Search + Table
+# MAIN → Patients + Search
 # -------------------------
 
 st.header("Patients")
@@ -79,7 +79,8 @@ if patients:
     if patient_dict:
         selected_patient = st.selectbox(
             "Select Patient",
-            list(patient_dict.keys())
+            list(patient_dict.keys()),
+            key="visit_patient"   # ✅ FIX
         )
 
         complaint = st.text_area("Complaint")
@@ -102,7 +103,7 @@ else:
     st.write("Add a patient first")
 
 # -------------------------
-# MAIN → Patient History
+# MAIN → Visit History
 # -------------------------
 
 st.header("Visit History")
@@ -115,7 +116,8 @@ if patients:
 
     selected_patient_history = st.selectbox(
         "Select Patient",
-        list(patient_dict_history.keys())
+        list(patient_dict_history.keys()),
+        key="history_patient"   # ✅ FIX
     )
 
     patient_id = patient_dict_history[selected_patient_history]
