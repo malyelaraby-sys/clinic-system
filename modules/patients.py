@@ -1,26 +1,26 @@
-from database.db import connect_db
+from database.supabase_client import supabase
 
-# ✅ Add a new patient
 def add_patient(name, phone, gender):
-    conn = connect_db()
-    cursor = conn.cursor()
-
-    cursor.execute("""
-    INSERT INTO patients (name, phone, gender)
-    VALUES (?, ?, ?)
-    """, (name, phone, gender))
-
-    conn.commit()
-    conn.close()
+    supabase.table("patients").insert({
+        "name": name,
+        "phone": phone,
+        "gender": gender
+    }).execute()
 
 
-# ✅ Get all patients
 def get_all_patients():
-    conn = connect_db()
-    cursor = conn.cursor()
-
-    cursor.execute("SELECT * FROM patients")
-    patients = cursor.fetchall()
-
-    conn.close()
+    response = supabase.table("patients").select("*").order("id").execute()
+    
+    # Convert to same format your app expects (list of tuples)
+    patients = [
+        (
+            p["id"],
+            p["name"],
+            p.get("phone", ""),
+            p.get("gender", ""),
+            p.get("created_at", "")
+        )
+        for p in response.data
+    ]
+    
     return patients
