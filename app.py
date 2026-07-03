@@ -210,26 +210,42 @@ if patients:
             key="visit_patient"
         )
 
-        complaint = st.text_area("Complaint")
-        diagnosis = st.text_area("Diagnosis")
-        notes = st.text_area("Notes")
+        chief_complaint = st.text_input("Chief Complaint")
+
+        history_present_illness = st.text_area(
+            "History of Present Illness"
+        )
+
+        examination = st.text_area(
+            "Examination"
+        )
+
+        assessment = st.text_input("Assessment")
+
+        plan = st.text_area(
+            "Plan"
+        )
 
         if st.button("Add Visit"):
             patient_id = patient_dict[selected_patient]
 
-            if complaint and diagnosis:
+            if chief_complaint.strip() and assessment.strip():
                 add_visit(
-                    patient_id,
-                    complaint,
-                    diagnosis,
-                    notes,
-                    doctor_name
-                )
+                    patient_id=patient_id,
+                    doctor_name=doctor_name,
+                    chief_complaint=chief_complaint,
+                    history_present_illness=history_present_illness,
+                    examination=examination,
+                    assessment=assessment,
+                    plan=plan
+               )
                 log_event("ADD_VISIT", selected_patient)
                 st.success("Visit added ✅")
             else:
                 log_event("ERROR_ADD_VISIT", selected_patient)
-                st.error("Fill required fields ❌")
+                st.error(
+                    "Chief Complaint and Assessment are required ❌"
+            )
     else:
         st.write("No matching patient")
 else:
@@ -261,13 +277,76 @@ if patients:
 
     if visits:
         for visit in visits:
-            visit_id, pid, date, complaint, diagnosis, notes = visit
+            if len(visit) == 6:
+                (
+                    visit_id,
+                    pid,
+                    date,
+                    complaint,
+                    diagnosis,
+                    notes
+                ) = visit
+
+                chief_complaint = ""
+                history_present_illness = ""
+                examination = ""
+                assessment = ""
+                plan = ""
+            else:
+                (
+                    visit_id,
+                    pid,
+                    date,
+                    complaint,
+                    diagnosis,
+                    notes,
+                    chief_complaint,
+                    history_present_illness,
+                    examination,
+                    assessment,
+                    plan
+                ) = visit
 
             with st.expander(f"Visit on {date}"):
-                st.markdown(f"**Complaint:** {complaint}")
-                st.markdown(f"**Diagnosis:** {diagnosis}")
+                # New structured visit
+                if chief_complaint:
+                    st.markdown(f"**Chief Complaint:** {chief_complaint}")
 
-                st.markdown("**Notes:**")
-                st.text(notes if notes else "No notes")
+                    st.markdown("**History of Present Illness:**")
+                    st.text(
+                        history_present_illness
+                        if history_present_illness
+                        else "Not documented"
+                    )
+
+                    st.markdown("**Examination:**")
+                    st.text(
+                        examination
+                        if examination
+                        else "Not documented"
+                    )
+
+                    st.markdown(f"**Assessment:** {assessment}")
+
+                    st.markdown("**Plan:**")
+                    st.text(
+                        plan
+                        if plan
+                        else "Not documented"
+                    )
+
+                # Legacy visit
+                else:
+                    st.markdown(f"**Complaint:** {complaint}")
+
+                    st.markdown(f"**Diagnosis:** {diagnosis}")
+
+                    st.markdown("**Notes:**")
+
+                    st.text(
+                        notes
+                        if notes
+                        else "No notes"
+                    )
     else:
         st.write("No visits found")
