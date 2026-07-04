@@ -220,7 +220,7 @@ if patients:
             "Examination"
         )
 
-        assessment = st.text_input("Assessment")
+        assessment = st.text_input("Diagnosis")
 
         plan = st.text_area(
             "Plan"
@@ -244,7 +244,7 @@ if patients:
             else:
                 log_event("ERROR_ADD_VISIT", selected_patient)
                 st.error(
-                    "Chief Complaint and Assessment are required ❌"
+                    "Chief Complaint and Diagnosis are required ❌"
             )
     else:
         st.write("No matching patient")
@@ -326,7 +326,7 @@ if patients:
                         else "Not documented"
                     )
 
-                    st.markdown(f"**Assessment:** {assessment}")
+                    st.markdown(f"**Diagnosis:** {assessment}")
 
                     st.markdown("**Plan:**")
                     st.text(
