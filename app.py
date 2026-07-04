@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from database.models import create_tables
 from modules.patients import add_patient, get_all_patients
@@ -8,6 +8,23 @@ from modules.visits import add_visit, get_visits_by_patient
 from modules.doctors import add_doctor, get_doctors
 from modules.orders import add_order, get_orders_by_patient
 from utils.tracker import log_event
+
+
+def format_datetime(timestamp):
+    if not timestamp:
+        return ""
+
+    try:
+        dt = datetime.fromisoformat(str(timestamp))
+
+        # Cairo time
+        dt = dt + timedelta(hours=3)
+
+        return dt.strftime("%d %b %Y, %I:%M %p")
+
+    except Exception:
+        return str(timestamp)
+
 
 # Title
 st.title("Clinic System MVP")
@@ -208,176 +225,184 @@ else:
 # MAIN → Add Visit
 # -------------------------
 
-st.subheader("Add Visit")
+with st.expander("Add Visit", expanded=True):
 
-if patients:
-    if current_patient_id:
+    if patients:
+        if current_patient_id:
 
-        st.write(f"Current Patient: {current_patient['Name']}")
+            st.write(f"Current Patient: {current_patient['Name']}")
 
-        chief_complaint = st.text_input("Chief Complaint")
+            chief_complaint = st.text_input(
+                "Chief Complaint", key="visit_chief_complaint"
+            )
 
-        history_present_illness = st.text_area("History of Present Illness")
+            history_present_illness = st.text_area(
+                "History of Present Illness", key="visit_hpi"
+            )
 
-        examination = st.text_area("Examination")
+            examination = st.text_area("Examination", key="visit_examination")
 
-        assessment = st.text_input("Diagnosis")
+            assessment = st.text_input("Diagnosis", key="visit_diagnosis")
 
-        plan = st.text_area("Plan")
+            plan = st.text_area("Plan", key="visit_plan")
 
-        if st.button("Add Visit"):
-            patient_id = current_patient_id
+            if st.button("Add Visit"):
+                patient_id = current_patient_id
 
-            if chief_complaint.strip() and assessment.strip():
-                add_visit(
-                    patient_id=patient_id,
-                    doctor_name=doctor_name,
-                    chief_complaint=chief_complaint,
-                    history_present_illness=history_present_illness,
-                    examination=examination,
-                    assessment=assessment,
-                    plan=plan,
-                )
-                log_event("ADD_VISIT", current_patient["Name"])
-                st.success("Visit added ✅")
-            else:
-                log_event("ERROR_ADD_VISIT", current_patient["Name"])
-                st.error("Chief Complaint and Diagnosis are required ❌")
+                if chief_complaint.strip() and assessment.strip():
+                    add_visit(
+                        patient_id=patient_id,
+                        doctor_name=doctor_name,
+                        chief_complaint=chief_complaint,
+                        history_present_illness=history_present_illness,
+                        examination=examination,
+                        assessment=assessment,
+                        plan=plan,
+                    )
+                    log_event("ADD_VISIT", current_patient["Name"])
+                    st.success("Visit added ✅")
+
+                else:
+                    log_event("ERROR_ADD_VISIT", current_patient["Name"])
+                    st.error("Chief Complaint and Diagnosis are required ❌")
+        else:
+            st.write("Select a patient")
     else:
-        st.write("Select a patient")
-else:
-    st.write("Add a patient first")
+        st.write("Add a patient first")
 
 # -------------------------
 # MAIN → Visit History (FINAL VERSION)
 # -------------------------
 
-st.subheader("Visit History")
+with st.expander("Visit History"):
 
-if patients:
-    st.write(f"Current Patient: {current_patient['Name']}")
+    if patients:
+        st.write(f"Current Patient: {current_patient['Name']}")
 
-    patient_id = current_patient_id
+        patient_id = current_patient_id
 
-    visits = get_visits_by_patient(patient_id, doctor_name)
+        visits = get_visits_by_patient(patient_id, doctor_name)
 
-    log_event("VIEW_HISTORY", current_patient["Name"])
+        log_event("VIEW_HISTORY", current_patient["Name"])
 
-    if visits:
-        for visit in visits:
-            if len(visit) == 6:
-                visit_id, pid, date, complaint, diagnosis, notes = visit
+        if visits:
+            for visit in visits:
+                if len(visit) == 6:
+                    visit_id, pid, date, complaint, diagnosis, notes = visit
 
-                chief_complaint = ""
-                history_present_illness = ""
-                examination = ""
-                assessment = ""
-                plan = ""
-            else:
-                (
-                    visit_id,
-                    pid,
-                    date,
-                    complaint,
-                    diagnosis,
-                    notes,
-                    chief_complaint,
-                    history_present_illness,
-                    examination,
-                    assessment,
-                    plan,
-                ) = visit
-
-            with st.expander(f"Visit on {date}"):
-                # New structured visit
-                if chief_complaint:
-                    st.markdown(f"**Chief Complaint:** {chief_complaint}")
-
-                    st.markdown("**History of Present Illness:**")
-                    st.text(
-                        history_present_illness
-                        if history_present_illness
-                        else "Not documented"
-                    )
-
-                    st.markdown("**Examination:**")
-                    st.text(examination if examination else "Not documented")
-
-                    st.markdown(f"**Diagnosis:** {assessment}")
-
-                    st.markdown("**Plan:**")
-                    st.text(plan if plan else "Not documented")
-
-                # Legacy visit
+                    chief_complaint = ""
+                    history_present_illness = ""
+                    examination = ""
+                    assessment = ""
+                    plan = ""
                 else:
-                    st.markdown(f"**Complaint:** {complaint}")
+                    (
+                        visit_id,
+                        pid,
+                        date,
+                        complaint,
+                        diagnosis,
+                        notes,
+                        chief_complaint,
+                        history_present_illness,
+                        examination,
+                        assessment,
+                        plan,
+                    ) = visit
 
-                    st.markdown(f"**Diagnosis:** {diagnosis}")
+                with st.expander(f"Visit on {format_datetime(date)}"):
+                    # New structured visit
+                    if chief_complaint:
+                        st.markdown(f"**Chief Complaint:** {chief_complaint}")
 
-                    st.markdown("**Notes:**")
+                        st.markdown("**History of Present Illness:**")
+                        st.text(
+                            history_present_illness
+                            if history_present_illness
+                            else "Not documented"
+                        )
 
-                    st.text(notes if notes else "No notes")
-    else:
-        st.write("No visits found")
+                        st.markdown("**Examination:**")
+                        st.text(examination if examination else "Not documented")
+
+                        st.markdown(f"**Diagnosis:** {assessment}")
+
+                        st.markdown("**Plan:**")
+                        st.text(plan if plan else "Not documented")
+
+                    # Legacy visit
+                    else:
+                        st.markdown(f"**Complaint:** {complaint}")
+
+                        st.markdown(f"**Diagnosis:** {diagnosis}")
+
+                        st.markdown("**Notes:**")
+
+                        st.text(notes if notes else "No notes")
+        else:
+            st.write("No visits found")
 # -------------------------
 # MAIN → Orders
 # -------------------------
 
-st.subheader("Orders")
+with st.expander("Orders"):
 
-if patients:
+    if patients:
 
-    st.write(f"Current Patient: {current_patient['Name']}")
+        st.write(f"Current Patient: {current_patient['Name']}")
 
-    order_type = st.selectbox(
-        "Order Type", ["Laboratory", "Imaging", "Procedure", "Referral"]
-    )
+        order_type = st.selectbox(
+            "Order Type", ["Laboratory", "Imaging", "Procedure", "Referral"]
+        )
 
-    order_text = st.text_area("Order Details")
+        order_text = st.text_area("Order Details")
 
-    if st.button("Add Order"):
+        if st.button("Add Order"):
 
-        if order_text.strip():
+            if order_text.strip():
 
-            patient_id = current_patient_id
+                patient_id = current_patient_id
 
-            add_order(
-                visit_id=None,
-                patient_id=patient_id,
-                doctor_name=doctor_name,
-                order_type=order_type,
-                order_text=order_text,
-            )
+                add_order(
+                    visit_id=None,
+                    patient_id=patient_id,
+                    doctor_name=doctor_name,
+                    order_type=order_type,
+                    order_text=order_text,
+                )
 
-            st.success("Order added ✅")
+                st.success("Order added ✅")
 
-        else:
-            st.error("Order details required ❌")
-        # -------------------------
+            else:
+                st.error("Order details required ❌")
+# -------------------------
 # MAIN → Order History
 # -------------------------
 
-st.subheader("Order History")
+with st.expander("Order History"):
 
-if patients:
+    if patients:
 
-    st.write(f"Current Patient: {current_patient['Name']}")
+        st.write(f"Current Patient: {current_patient['Name']}")
 
-    patient_id = current_patient_id
+        patient_id = current_patient_id
 
-    orders = get_orders_by_patient(patient_id, doctor_name)
+        orders = get_orders_by_patient(patient_id, doctor_name)
 
-    if orders:
+        if orders:
 
-        for order in orders:
+            for order in orders:
 
-            with st.expander(f"{order['order_type']} - {order['created_at']}"):
+                with st.expander(
+                    f"{order['order_type']} - "
+                    f"{format_datetime(order['created_at'])}"
+                ):
 
-                st.markdown(f"**Type:** {order['order_type']}")
+                    st.markdown(f"**Type:** {order['order_type']}")
 
-                st.markdown("**Details:**")
+                    st.markdown("**Details:**")
 
-                st.text(order.get("order_text", "No details"))
+                    st.text(order.get("order_text", "No details"))
 
-    else:
-        st.write("No orders found")
+        else:
+            st.write("No orders found")
