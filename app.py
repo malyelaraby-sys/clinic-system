@@ -231,40 +231,43 @@ with st.expander("Add Visit", expanded=True):
         if current_patient_id:
 
             st.write(f"Current Patient: {current_patient['Name']}")
+            with st.form("visit_form"):
 
-            chief_complaint = st.text_input(
-                "Chief Complaint", key="visit_chief_complaint"
-            )
+                chief_complaint = st.text_input(
+                    "Chief Complaint", key="visit_chief_complaint"
+                )
 
-            history_present_illness = st.text_area(
-                "History of Present Illness", key="visit_hpi"
-            )
+                history_present_illness = st.text_area(
+                    "History of Present Illness", key="visit_hpi"
+                )
 
-            examination = st.text_area("Examination", key="visit_examination")
+                examination = st.text_area("Examination", key="visit_examination")
 
-            assessment = st.text_input("Diagnosis", key="visit_diagnosis")
+                assessment = st.text_input("Diagnosis", key="visit_diagnosis")
 
-            plan = st.text_area("Plan", key="visit_plan")
+                plan = st.text_area("Plan", key="visit_plan")
 
-            if st.button("Add Visit"):
-                patient_id = current_patient_id
+                submitted = st.form_submit_button("Add Visit")
 
-                if chief_complaint.strip() and assessment.strip():
-                    add_visit(
-                        patient_id=patient_id,
-                        doctor_name=doctor_name,
-                        chief_complaint=chief_complaint,
-                        history_present_illness=history_present_illness,
-                        examination=examination,
-                        assessment=assessment,
-                        plan=plan,
-                    )
-                    log_event("ADD_VISIT", current_patient["Name"])
-                    st.success("Visit added ✅")
+                if submitted:
+                    patient_id = current_patient_id
 
-                else:
-                    log_event("ERROR_ADD_VISIT", current_patient["Name"])
-                    st.error("Chief Complaint and Diagnosis are required ❌")
+                    if chief_complaint.strip() and assessment.strip():
+                        add_visit(
+                            patient_id=patient_id,
+                            doctor_name=doctor_name,
+                            chief_complaint=chief_complaint,
+                            history_present_illness=history_present_illness,
+                            examination=examination,
+                            assessment=assessment,
+                            plan=plan,
+                        )
+                        log_event("ADD_VISIT", current_patient["Name"])
+                        st.success("Visit added ✅")
+
+                    else:
+                        log_event("ERROR_ADD_VISIT", current_patient["Name"])
+                        st.error("Chief Complaint and Diagnosis are required ❌")
         else:
             st.write("Select a patient")
     else:
@@ -350,31 +353,33 @@ with st.expander("Orders"):
     if patients:
 
         st.write(f"Current Patient: {current_patient['Name']}")
+        with st.form("order_form"):
+            order_type = st.selectbox(
+                "Order Type", ["Laboratory", "Imaging", "Procedure", "Referral"]
+            )
 
-        order_type = st.selectbox(
-            "Order Type", ["Laboratory", "Imaging", "Procedure", "Referral"]
-        )
+            order_text = st.text_area("Order Details")
 
-        order_text = st.text_area("Order Details")
+            submitted_order = st.form_submit_button("Add Order")
 
-        if st.button("Add Order"):
+            if submitted_order:
 
-            if order_text.strip():
+                if order_text.strip():
 
-                patient_id = current_patient_id
+                    patient_id = current_patient_id
 
-                add_order(
-                    visit_id=None,
-                    patient_id=patient_id,
-                    doctor_name=doctor_name,
-                    order_type=order_type,
-                    order_text=order_text,
-                )
+                    add_order(
+                        visit_id=None,
+                        patient_id=patient_id,
+                        doctor_name=doctor_name,
+                        order_type=order_type,
+                        order_text=order_text,
+                    )
 
-                st.success("Order added ✅")
+                    st.success("Order added ✅")
 
-            else:
-                st.error("Order details required ❌")
+                else:
+                    st.error("Order details required ❌")
 # -------------------------
 # MAIN → Order History
 # -------------------------
